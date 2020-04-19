@@ -23,6 +23,8 @@ require_once 'login_middleware.php';
 require_once 'caching_middleware.php';
 require_once 'mailer.php';
 require_once 'metadata_epub.php';
+require_once 'solr.php';
+require_once 'solr_middleware.php';
 
 use dflydev\markdown\MarkdownExtraParser;
 use Aura\Auth as Auth;
@@ -40,8 +42,8 @@ $appversion = '1.5.0';
 $app = new \Slim\Slim(array(
     'view' => new \Slim\Views\Twig(),
     #'mode' => 'production',
-    #'mode' => 'debug',
-    'mode' => 'development',
+    'mode' => 'debug',
+    #'mode' => 'development',
 ));
 
 $app->configureMode('production', 'confprod');
@@ -130,16 +132,25 @@ $globalSettings[METADATA_UPDATE] = 0;
 $globalSettings[LOGIN_REQUIRED] = 1;
 $globalSettings[TITLE_TIME_SORT] = TITLE_TIME_SORT_TIMESTAMP;
 $globalSettings[RELATIVE_URLS] = 1;
+# SOLR Configuration
+$globalSettings[USE_SOLR] = false;
+$globalSettings[SOLR_HOST] = '192.168.0.101';
+$globalSettings[SOLR_PORT] = 8983;
+$globalSettings[SOLR_PATH] = '/';
+$globalSettings[SOLR_CORE] = 'calibre';
+$globalSettings[SOLR_TIMEOUT] = 30;
 
 $knownConfigs = array(CALIBRE_DIR, DB_VERSION, KINDLE, KINDLE_FROM_EMAIL,
     THUMB_GEN_CLIPPED, PAGE_SIZE, DISPLAY_APP_NAME, MAILER, SMTP_SERVER,
     SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_ENCRYPTION, METADATA_UPDATE,
-    LOGIN_REQUIRED, TITLE_TIME_SORT, RELATIVE_URLS);
+    LOGIN_REQUIRED, TITLE_TIME_SORT, RELATIVE_URLS, USE_SOLR, SOLR_HOST,
+    SOLR_PORT, SOLR_PATH, SOLR_CORE, SOLR_TIMEOUT);
 
 # Freeze (true) DB schema before release! Set to false for DB development.
 $app->bbs = new BicBucStriim('data/data.db', true);
 $app->add(new \CalibreConfigMiddleware(CALIBRE_DIR));
 $app->add(new \LoginMiddleware($appname, array('js', 'img', 'style')));
+$app->add(new \SolrMiddleware());
 $app->add(new \OwnConfigMiddleware($knownConfigs));
 $app->add(new \CachingMiddleware(array('/admin', '/login')));
 
@@ -154,6 +165,8 @@ $app->put('/admin/idtemplates/:id/', 'check_admin', 'admin_modify_idtemplate');
 $app->delete('/admin/idtemplates/:id/', 'check_admin', 'admin_clear_idtemplate');
 $app->get('/admin/mail/', 'check_admin', 'admin_get_smtp_config');
 $app->put('/admin/mail/', 'check_admin', 'admin_change_smtp_config');
+$app->get('/admin/solr/', 'check_admin', 'admin_get_solr_config');
+$app->put('/admin/solr/', 'check_admin', 'admin_change_solr_config');
 $app->get('/admin/users/', 'check_admin', 'admin_get_users');
 $app->post('/admin/users/', 'check_admin', 'admin_add_user');
 $app->get('/admin/users/:id/', 'check_admin', 'admin_get_user');
@@ -513,6 +526,45 @@ function admin_change_smtp_config()
         'isadmin' => is_admin()));
 }
 
+/**
+ * Generate the SOLR configuration page -> GET /admin/solr/
+ */
+function admin_get_solr_config()
+{
+    global $app, $globalSettings;
+
+    $solr = array('host' => $globalSettings[SOLR_HOST],
+        'port' => $globalSettings[SOLR_PORT],
+        'path' => $globalSettings[SOLR_PATH],
+        'core' => $globalSettings[SOLR_CORE],
+        'timeout' => $globalSettings[SOLR_TIMEOUT]);
+    $app->render('admin_solr.html', array(
+        'page' => mkPage(getMessageString('admin_solr'), 0, 2),
+        'solr' => $solr,
+        'isadmin' => is_admin()));
+}
+
+/**
+ * Change the SOLR configuration -> PUT /admin/solr/
+ */
+function admin_change_solr_config()
+{
+    global $app;
+
+    $solr_data = $app->request()->put();
+    $app->getLog()->debug('admin_change_solr_configuration: ' . var_export($solr_data, true));
+    $solr_config = array(SOLR_HOST => $solr_data['host'],
+        SOLR_PORT => $solr_data['port'],
+        SOLR_PATH => $solr_data['path'],
+        SOLR_CORE => $solr_data['core'],
+        SOLR_TIMEOUT => $solr_data['timeout']);
+    $app->bbs->saveConfigs($solr_config);
+    $resp = $app->response();
+    $app->render('admin_solr.html', array(
+        'page' => mkPage(getMessageString('admin_solr'), 0, 2),
+        'solr' => $solr_data,
+        'isadmin' => is_admin()));
+}
 
 /**
  * Generate the users overview page -> GET /admin/users/
@@ -1061,6 +1113,8 @@ function globalSearch()
     $tlt_books = array_map('checkThumbnail', $tlt['entries']);
     $tls = $app->calibre->seriesSlice(0, $globalSettings[PAGE_SIZE], trim($search));
     $tls_books = array_map('checkThumbnail', $tls['entries']);
+    $tld = $app->solr->docsSlice($globalSettings[USE_SOLR], 0, $globalSettings[PAGE_SIZE], trim($search));
+    $tld_books = array_map('checkThumbnail', $tld['entries']);
     $app->render('global_search.html', array(
         'page' => mkPage(getMessageString('pagination_search'), 0),
         'books' => $tlb_books,
@@ -1075,6 +1129,10 @@ function globalSearch()
         'series' => $tls_books,
         'series_total' => $tls['total'] == -1 ? 0 : $tls['total'],
         'more_series' => ($tls['total'] > $globalSettings[PAGE_SIZE]),
+        'use_solr' => $globalSettings[USE_SOLR],
+        'solr' => $tld_books,
+        'solr_total' => $tld['total'] == -1 ? 0 : $tld['total'],
+        'more_solr' => ($tld['total'] > $globalSettings[PAGE_SIZE]),
         'search' => $search));
 }
 
@@ -1096,25 +1154,31 @@ function titlesSlice($index = 0)
         $search = trim($search);
     }
     $sort = $app->request()->get('sort');
+    $solr = $app->request()->get('solr');
+    $solr = (isset($solr) && $solr == true) ? true : false;
 
-    if (isset($sort) && $sort == 'byReverseDate') {
-        switch ($globalSettings[TITLE_TIME_SORT]) {
-            case TITLE_TIME_SORT_TIMESTAMP:
-                $tl = $app->calibre->timestampOrderedTitlesSlice($globalSettings['lang'], $index, $globalSettings[PAGE_SIZE], $filter, $search);
-                break;
-            case TITLE_TIME_SORT_PUBDATE:
-                $tl = $app->calibre->pubdateOrderedTitlesSlice($globalSettings['lang'], $index, $globalSettings[PAGE_SIZE], $filter, $search);
-                break;
-            case TITLE_TIME_SORT_LASTMODIFIED:
-                $tl = $app->calibre->lastmodifiedOrderedTitlesSlice($globalSettings['lang'], $index, $globalSettings[PAGE_SIZE], $filter, $search);
-                break;
-            default:
-                $app->getLog()->error('titlesSlice: invalid sort order ' . $globalSettings[TITLE_TIME_SORT]);
-                $tl = $app->calibre->timestampOrderedTitlesSlice($globalSettings['lang'], $index, $globalSettings[PAGE_SIZE], $filter, $search);
-                break;
-        }
+    if ($solr == true) {
+        $tl = $app->solr->docsSlice($globalSettings[USE_SOLR], $index, $globalSettings[PAGE_SIZE],$search);
     } else {
-        $tl = $app->calibre->titlesSlice($globalSettings['lang'], $index, $globalSettings[PAGE_SIZE], $filter, $search);
+        if (isset($sort) && $sort == 'byReverseDate') {
+            switch ($globalSettings[TITLE_TIME_SORT]) {
+                case TITLE_TIME_SORT_TIMESTAMP:
+                    $tl = $app->calibre->timestampOrderedTitlesSlice($globalSettings['lang'], $index, $globalSettings[PAGE_SIZE], $filter, $search);
+                    break;
+                case TITLE_TIME_SORT_PUBDATE:
+                    $tl = $app->calibre->pubdateOrderedTitlesSlice($globalSettings['lang'], $index, $globalSettings[PAGE_SIZE], $filter, $search);
+                    break;
+                case TITLE_TIME_SORT_LASTMODIFIED:
+                    $tl = $app->calibre->lastmodifiedOrderedTitlesSlice($globalSettings['lang'], $index, $globalSettings[PAGE_SIZE], $filter, $search);
+                    break;
+                default:
+                    $app->getLog()->error('titlesSlice: invalid sort order ' . $globalSettings[TITLE_TIME_SORT]);
+                    $tl = $app->calibre->timestampOrderedTitlesSlice($globalSettings['lang'], $index, $globalSettings[PAGE_SIZE], $filter, $search);
+                    break;
+            }
+        } else {
+            $tl = $app->calibre->titlesSlice($globalSettings['lang'], $index, $globalSettings[PAGE_SIZE], $filter, $search);
+        }
     }
 
     $books = array_map('checkThumbnail', $tl['entries']);
@@ -1125,7 +1189,8 @@ function titlesSlice($index = 0)
         'curpage' => $tl['page'],
         'pages' => $tl['pages'],
         'search' => $search,
-        'sort' => $sort));
+        'sort' => $sort,
+        'solr' => $solr));
 }
 
 # Creates a human readable filesize string

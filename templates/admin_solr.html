@@ -1,0 +1,50 @@
+{% extends 'main.html' %}
+
+{% block pid %}id="padmin_solr" data-ajax="false"{%endblock%}
+{% block content %}
+
+<h1>{{ page.glob.l10n.admin_solr }}</h1>
+{% include "flash_messages.html" %}
+
+<p>{{page.glob.l10n.admin_solr_legend}}</p>
+<form action="{{page.rot}}/admin/solr/" method="put" id="solrform" data-proot="{{page.rot}}">
+	<fieldset data-role="fieldcontain">
+		<label for="host">{{page.glob.l10n.admin_solr_host}}</label>
+		<input name="host" id="host" type="text" 
+			value="{{solr.host}}" placeholder="localhost" 
+			required="true" />
+		<p>{{page.glob.l10n.admin_solr_host_expl}}</p>
+	</fieldset>
+	<fieldset data-role="fieldcontain">
+		<label for="port">{{page.glob.l10n.admin_solr_port}}</label>
+		<input name="port" id="port" type="number" 
+			value="{{solr.port}}" placeholder="8983" 
+			required="true" />
+		<p>{{page.glob.l10n.admin_solr_port_expl}}</p>					
+	</fieldset>	
+	<fieldset data-role="fieldcontain">
+		<label for="path">{{page.glob.l10n.admin_solr_path}}</label>
+		<input name="path" id="path" type="text" 
+			value="{{solr.path}}" placeholder="/" required="true" />		
+		<p>{{page.glob.l10n.admin_solr_path_expl}}</p>					
+	</fieldset>
+	<fieldset data-role="fieldcontain"> 
+		<label for="core">{{page.glob.l10n.admin_solr_core}}</label>
+		<input name="core" id="core" type="text" 
+			value="{{solr.core}}" placeholder="calibre" 
+			required="true" />		
+		<p>{{page.glob.l10n.admin_solr_core_expl}}</p>					
+	</fieldset>	
+	<fieldset data-role="fieldcontain">
+		<label for="timeout">{{page.glob.l10n.admin_solr_timeout}}</label>
+		<input name="timeout" id="timeout" type="number" 
+			value="{{solr.timeout}}" placeholder="30" 
+			required="true" />		
+		<p>{{page.glob.l10n.admin_solr_timeout_expl}}</p>				
+	</fieldset>
+
+	<button  data-ajax="true" data-icon="check" type="submit">
+		{{page.glob.l10n.save}}
+	</button>	
+</form>
+{% endblock %}

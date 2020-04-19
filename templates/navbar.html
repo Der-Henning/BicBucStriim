@@ -45,7 +45,7 @@
         <li>
 	{% if curpage > 0 %}
             <a data-icon="arrow-l"
-               href="{{page.rot}}/{{url}}/{{curpage - 1}}/{% if search != NULL %}?search={{search}}{% endif %}{% if sort != NULL %}?sort={{sort}}{% endif %}">
+               href="{{page.rot}}/{{url}}/{{curpage - 1}}/{% if search != NULL %}?search={{search}}{% endif %}{% if sort != NULL %}?sort={{sort}}{% endif %}{% if solr != NULL %}&solr={{solr}}{% endif %}">
                 {{page.glob.l10n.pagination_prev}}
             </a>
             {% else %}
@@ -73,7 +73,7 @@
         <li>
 	{% if curpage+1 < pages %}
             <a data-icon="arrow-r"
-               href="{{page.rot}}/{{url}}/{{curpage + 1}}/{% if search != NULL %}?search={{search}}{% endif %}{% if sort != NULL %}?sort={{sort}}{% endif %}">
+               href="{{page.rot}}/{{url}}/{{curpage + 1}}/{% if search != NULL %}?search={{search}}{% endif %}{% if sort != NULL %}?sort={{sort}}{% endif %}{% if solr != NULL %}&solr={{solr}}{% endif %}">
 			{{page.glob.l10n.pagination_next}}
             </a>
             {% else %}

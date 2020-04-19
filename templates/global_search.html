@@ -77,5 +77,20 @@
 			{% endif %}
 		</ul>
 	</div>
+	{% if use_solr %}
+		<div data-role="collapsible">
+			<h3>{{page.glob.l10n.titles}} (SOLR): {{solr_total}}</h3>
+			<ul data-role="listview" data-filter="false">	
+				{% for book in solr %}
+					{% include "title_entry.html" %}
+				{% endfor %}
+				{% if more_solr %}
+					<li data-theme="a">
+						<a href="{{page.rot}}/titleslist/0/?search={{search}}&solr=true">{{solr_total}} {{page.glob.l10n.titles}} (SOLR) ...</a>
+					</li>
+				{% endif %}
+			</ul>
+		</div>
+	{% endif %}
 </div>
 {% endblock %}

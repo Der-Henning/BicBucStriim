@@ -87,9 +87,9 @@ function check_php() {
 	$pv = preg_split('/\./', phpversion());	
 	$maj = intval($pv[0]);
 	$min = intval($pv[1]);
-	if ($maj == 5 && $min >= 3) 
+	if ($maj == 7 && $min >= 2) 
 		return true;
-	elseif ($maj > 5) 
+	elseif ($maj > 7) 
 		return true;
 	else
 		return false;

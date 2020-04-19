@@ -53,5 +53,11 @@ const TITLE_TIME_SORT_PUBDATE = 'pubdate';
 const TITLE_TIME_SORT_LASTMODIFIED = 'lastmodified';
 # if true then relative urls will be generated
 const RELATIVE_URLS = 'relative_urls';
-
+# Solr Connection
+const USE_SOLR = 'use_solr';
+const SOLR_HOST = 'solr_host';
+const SOLR_PORT = 'solr_port';
+const SOLR_PATH = 'solr_path';
+const SOLR_CORE = 'solr_core';
+const SOLR_TIMEOUT = 'solr_timeout';
 ?>

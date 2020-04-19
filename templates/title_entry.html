@@ -10,6 +10,9 @@
 			{% if series %}{{book.series_index}} - {% endif %}
 			{{ book.sort }} ({{ book.pubdate|date("Y") }})
 		</h3>
-		<p>{{book.author_sort}} {{book.addInfo}}</p>
+		<p>
+			{{book.author_sort}} {{book.addInfo}}
+			{% if solr %} - Score: {{book.score}}{% endif %}
+		</p>
 	</a>
 </li>

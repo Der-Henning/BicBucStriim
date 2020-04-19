@@ -260,6 +260,42 @@ admin_short:
   gl: Admin
   es: Admin
   pl: Admin
+admin_solr:
+  de: SOLR Konfiguration
+  en: SOLR configuration
+admin_solr_legend:
+  de: Konfigurationsangaben für die Verbindung mit einem SOLR Server
+  en: Configuration details for connection a SOLR Server
+admin_solr_host:
+  de: Host
+  en: Host
+admin_solr_host_expl:
+  de: Hostname des Servers
+  en: Hostname of Server
+admin_solr_port:
+  de: Port
+  en: Port
+admin_solr_port_expl:
+  de: Port des Servers
+  en: Port of Server
+admin_solr_path:
+  de: Pfad
+  en: Path
+admin_solr_path_expl:
+  de: Pfad zum SOLR Core
+  en: Path to SOLR Core
+admin_solr_core:
+  de: Core
+  en: Core
+admin_solr_core_expl:
+  de: Name des SOLR Cores
+  en: Name of SOLR Core
+admin_solr_timeout:
+  de: Timeout
+  en: Timeout
+admin_solr_timeout_expl:
+  de: Timeout für SOLR Abfragen in Sekunden
+  en: Timeout for SOLR Requests in Seconds
 admin_mailer:
   hu: Email küldés
   de: Mailversand
@@ -1753,6 +1789,12 @@ series_details:
   gl: Detalle da serie
   es: Detalles de la serie
   pl: Szczegóły serii
+solr:
+  de: SOLR
+  en: SOLR
+solr_expl:
+  de: "Aktiviert SOLR als zusätzliche Suchmaschine. Weitere Einstellungen notwendig: "
+  en: "Aktivates SOLR as additional Search Engine. Additional Setup nessessary: "
 switch_yes:
   hu: Igen
   de: Ja

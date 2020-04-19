@@ -119,6 +119,18 @@
 		</select>
 		<p>{{page.glob.l10n.relative_urls_expl}}</p>
 	</fieldset>
+	<fieldset data-role="fieldcontain">
+		<label for="use_solr">{{page.glob.l10n.solr}}</label>
+		<select name="use_solr" id="use_solr" data-role="slider">
+			<option value="0" {% if page.glob.use_solr == "0" %}selected {%endif%}>
+			{{page.glob.l10n.switch_no}}
+			</option>
+			<option value="1" {% if page.glob.use_solr == "1" %}selected {%endif%}>
+			{{page.glob.l10n.switch_yes}}
+			</option>
+		</select>
+		<p>{{page.glob.l10n.solr_expl}} <a href="../solr/">SOLR</a></p>
+	</fieldset>
 
 	<button type="submit">{{page.glob.l10n.save}}</button>	
 </form>
