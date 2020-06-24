@@ -28,7 +28,7 @@ class Solr
         }
     }
 
-    function docsSlice($use_solr = true, $index = 0, $length = 100, $search = NULL)
+    function docsSlice($use_solr = false, $index = 0, $length = 100, $search = NULL)
     {
         global $app;
         $entries = array();
@@ -38,7 +38,11 @@ class Solr
             try{
                 $query = $this->client->createSelect();
                 $edismax = $query->getEDisMax();
-                $edismax->setQueryFields('title_deu title_eng title_ge authors tags_deu tags_eng tags_ge page_deu_* page_eng_* page_ge_*');
+                $edismax->setQueryFields('title_deu^2 title_eng^2 title_ge^2 authors^2 ' .
+                    'tags_deu^3 tags_eng^3 tags_ge^3 page_deu_*^1 page_eng_*^1 page_ge_*^1');
+                $edismax->setTie(0.5);
+                $edismax->setPhraseSlop(50);
+                $edismax->setQueryPhraseSlop(4);
 
                 $query->setQuery($search);
                 $query->setStart($index * $length)->setRows($length);

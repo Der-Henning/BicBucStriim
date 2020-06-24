@@ -428,6 +428,7 @@ class Calibre
 
     /**
      * Return the most recent books, sorted by modification date.
+     * Now sorted by publish date.
      * @param string $lang target language code
      * @param  int $nrOfTitles number of titles, page size. Default is 30.
      * @param  object $filter CalibreFilter
@@ -437,7 +438,7 @@ class Calibre
     function last30Books($lang, $nrOfTitles = 30, $filter)
     {
         $queryParams = $this->mkQueryParams(NULL, $filter, NULL, $nrOfTitles, NULL);
-        $books = $this->findPrepared('Book', 'SELECT * FROM ' . $filter->getBooksFilter() . ' ORDER BY timestamp DESC LIMIT :length', $queryParams);
+        $books = $this->findPrepared('Book', 'SELECT * FROM ' . $filter->getBooksFilter() . ' ORDER BY pubdate DESC LIMIT :length', $queryParams);
         $this->addBookDetails($lang, $books);
         return $books;
     }

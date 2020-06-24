@@ -134,7 +134,7 @@ $globalSettings[TITLE_TIME_SORT] = TITLE_TIME_SORT_TIMESTAMP;
 $globalSettings[RELATIVE_URLS] = 1;
 # SOLR Configuration
 $globalSettings[USE_SOLR] = false;
-$globalSettings[SOLR_HOST] = '192.168.0.101';
+$globalSettings[SOLR_HOST] = 'localhost';
 $globalSettings[SOLR_PORT] = 8983;
 $globalSettings[SOLR_PATH] = '/';
 $globalSettings[SOLR_CORE] = 'calibre';
